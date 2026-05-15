@@ -161,7 +161,7 @@ export default function ReadingPage() {
         </div>
 
         {/* TOOLBAR */}
-        <div className="flex justify-end mt-8 gap-2">
+        {/* <div className="flex justify-end mt-8 gap-2">
           <HighlightToolbar onColorSelect={highlightSelectedText} />
 
           <button
@@ -170,7 +170,7 @@ export default function ReadingPage() {
           >
             Remove Highlights
           </button>
-        </div>
+        </div> */}
 
         {/* READINGS */}
         {activeTab === "readings" && (
