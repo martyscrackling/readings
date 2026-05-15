@@ -21,6 +21,8 @@ import {
   Minimize,
   Lock,
   Unlock,
+  Minus,
+  Plus,
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
@@ -34,9 +36,10 @@ export default function HomilyEditor({ date }: Props) {
   const [colorOpen, setColorOpen] = useState(false);
   const [highlightOpen, setHighlightOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
-
-  // NEW
   const [isLocked, setIsLocked] = useState(false);
+
+  // GLOBAL FONT SIZE
+  const [fontSize, setFontSize] = useState(22);
 
   const editor = useEditor({
     extensions: [
@@ -53,7 +56,7 @@ export default function HomilyEditor({ date }: Props) {
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: "focus:outline-none outline-none border-none",
+        class: "focus:outline-none outline-none border-none min-h-[300px]",
       },
     },
     onUpdate: ({ editor }) => {
@@ -72,10 +75,8 @@ export default function HomilyEditor({ date }: Props) {
     if (savedHomily) editor.commands.setContent(savedHomily);
   }, [editor, date]);
 
-  // NEW
   useEffect(() => {
     if (!editor) return;
-
     editor.setEditable(!isLocked);
   }, [isLocked, editor]);
 
@@ -97,19 +98,29 @@ export default function HomilyEditor({ date }: Props) {
     { name: "Rose Pink", value: "#ffd1dc" },
   ];
 
+  const increaseFont = () => {
+    if (fontSize < 60) setFontSize(fontSize + 2);
+  };
+
+  const decreaseFont = () => {
+    if (fontSize > 14) setFontSize(fontSize - 2);
+  };
+
   return (
     <div
-      className={`space-y-6 transition-all ${
-        isFullScreen
-          ? "fixed inset-0 z-50 bg-white p-6 overflow-y-auto"
-          : ""
+      className={`space-y-4 transition-all ${
+        isFullScreen ? "fixed inset-0 z-50 bg-white p-6 overflow-y-auto" : ""
       }`}
     >
       {/* TOOLBAR */}
       {!isLocked && (
-        <div className="flex items-center justify-between bg-[#f7eef4] p-3 rounded-2xl w-full shadow-sm">
+        <div
+          className={`flex items-center justify-between bg-[#f7eef4] p-3 rounded-2xl w-full shadow-sm flex-wrap gap-3 ${
+            isFullScreen ? "sticky top-0 z-50" : ""
+          }`}
+        >
           {/* LEFT */}
-          <div className="flex items-center gap-2 relative">
+          <div className="flex items-center gap-2 relative flex-wrap">
             <button
               onClick={() => editor.chain().focus().toggleBold().run()}
               className="p-2 rounded-lg hover:bg-pink-100"
@@ -172,12 +183,7 @@ export default function HomilyEditor({ date }: Props) {
                     <button
                       key={h.value}
                       onClick={() => {
-                        editor
-                          .chain()
-                          .focus()
-                          .toggleHighlight({ color: h.value })
-                          .run();
-
+                        editor.chain().focus().toggleHighlight({ color: h.value }).run();
                         setHighlightOpen(false);
                       }}
                       className="w-6 h-6 rounded-full border"
@@ -190,30 +196,53 @@ export default function HomilyEditor({ date }: Props) {
           </div>
 
           {/* RIGHT */}
-          <div className="flex items-center gap-2">
-            {/* FULLSCREEN TOGGLE */}
-            <button
-              onClick={() => setIsFullScreen(!isFullScreen)}
-              className="p-2 rounded-lg hover:bg-pink-100"
-            >
-              {isFullScreen ? <Minimize size={18} /> : <Expand size={18} />}
-            </button>
+          <div className="flex flex-col items-end gap-2">
+            {/* TOP CONTROLS */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsFullScreen(!isFullScreen)}
+                className="p-2 rounded-lg hover:bg-pink-100"
+              >
+                {isFullScreen ? <Minimize size={18} /> : <Expand size={18} />}
+              </button>
 
-            <button
-              onClick={() => editor.chain().focus().undo().run()}
-              disabled={!editor.can().undo()}
-              className="p-2 rounded-lg hover:bg-pink-100 disabled:opacity-30"
-            >
-              <Undo2 size={18} />
-            </button>
+              <button
+                onClick={() => editor.chain().focus().undo().run()}
+                disabled={!editor.can().undo()}
+                className="p-2 rounded-lg hover:bg-pink-100 disabled:opacity-30"
+              >
+                <Undo2 size={18} />
+              </button>
 
-            <button
-              onClick={() => editor.chain().focus().redo().run()}
-              disabled={!editor.can().redo()}
-              className="p-2 rounded-lg hover:bg-pink-100 disabled:opacity-30"
-            >
-              <Redo2 size={18} />
-            </button>
+              <button
+                onClick={() => editor.chain().focus().redo().run()}
+                disabled={!editor.can().redo()}
+                className="p-2 rounded-lg hover:bg-pink-100 disabled:opacity-30"
+              >
+                <Redo2 size={18} />
+              </button>
+            </div>
+
+            {/* FONT SIZE CONTROLS */}
+            <div className="flex items-center gap-2 bg-white rounded-xl shadow-sm px-2 py-1">
+              <button
+                onClick={decreaseFont}
+                className="w-6 h-6 rounded-full bg-pink-100 hover:bg-pink-200 flex items-center justify-center"
+              >
+                <Minus size={12} />
+              </button>
+
+              <div className="text-xs font-medium min-w-[40px] text-center">
+                {fontSize}px
+              </div>
+
+              <button
+                onClick={increaseFont}
+                className="w-6 h-6 rounded-full bg-pink-100 hover:bg-pink-200 flex items-center justify-center"
+              >
+                <Plus size={12} />
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -224,7 +253,9 @@ export default function HomilyEditor({ date }: Props) {
           isFullScreen ? "flex-1" : ""
         }`}
       >
-        <EditorContent editor={editor} />
+        <div style={{ fontSize: `${fontSize}px`, lineHeight: 1.8 }}>
+          <EditorContent editor={editor} />
+        </div>
       </div>
 
       {/* SAVE STATUS */}
@@ -235,7 +266,7 @@ export default function HomilyEditor({ date }: Props) {
         </div>
       )}
 
-      {/* FLOATING LOCK/UNLOCK FAB */}
+      {/* LOCK / UNLOCK FAB */}
       {isFullScreen && (
         <button
           onClick={() => setIsLocked(!isLocked)}
