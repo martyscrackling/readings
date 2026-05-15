@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import ReadingCard from "@/components/ReadingCard";
 import ReadingTabs from "@/components/ReadingTabs";
 import HighlightToolbar from "@/components/HighlightToolbar";
+import HomilyEditor from "@/components/HomilyEditor";
 import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/dexie";
 import he from "he";
@@ -33,42 +34,110 @@ export default function ReadingPage() {
 
       setReading(data);
 
+      // SAVE OFFLINE COPY
       await db.readings.put({
         date: new Date().toISOString(),
         title: data?.Mass_G?.heading || "",
         content: data,
       });
+
+      // LOAD SAVED HIGHLIGHTS
+      setTimeout(async () => {
+        const saved = await db.highlights.get("daily-reading");
+
+        if (saved) {
+          const container = document.getElementById("reading-content");
+
+          if (container) {
+            container.innerHTML = saved.html;
+          }
+        }
+      }, 500);
     } catch (error) {
       console.error(error);
 
+      // LOAD OFFLINE DATA
       const offline = await db.readings.toArray();
+
       if (offline.length > 0) {
         setReading(offline[0].content);
+
+        // LOAD SAVED HIGHLIGHTS
+        setTimeout(async () => {
+          const saved = await db.highlights.get("daily-reading");
+
+          if (saved) {
+            const container = document.getElementById("reading-content");
+
+            if (container) {
+              container.innerHTML = saved.html;
+            }
+          }
+        }, 500);
       }
     } finally {
       setLoading(false);
     }
   }
 
-  function highlightSelectedText(color: string) {
+  async function highlightSelectedText(color: string) {
     const selection = window.getSelection();
+
     if (!selection || selection.rangeCount === 0) return;
 
     try {
       const range = selection.getRangeAt(0);
+
       const span = document.createElement("span");
 
       span.style.backgroundColor = color;
+      span.className = "saved-highlight";
+
       range.surroundContents(span);
 
       selection.removeAllRanges();
+
+      // SAVE UPDATED HTML
+      const container = document.getElementById("reading-content");
+
+      if (container) {
+        await db.highlights.put({
+          id: "daily-reading",
+          html: container.innerHTML,
+        });
+      }
     } catch (e) {
       console.warn("Highlight error:", e);
     }
   }
 
-  if (loading) return <p className="p-10 text-center">Loading readings...</p>;
-  if (!reading) return <p className="p-10 text-center">No readings found.</p>;
+  async function removeHighlights() {
+    const container = document.getElementById("reading-content");
+
+    if (!container) return;
+
+    const spans = container.querySelectorAll(".saved-highlight");
+
+    spans.forEach((span) => {
+      const parent = span.parentNode;
+
+      while (span.firstChild) {
+        parent?.insertBefore(span.firstChild, span);
+      }
+
+      parent?.removeChild(span);
+    });
+
+    await db.highlights.delete("daily-reading");
+  }
+
+  if (loading) {
+    return <p className="p-10 text-center">Loading readings...</p>;
+  }
+
+  if (!reading) {
+    return <p className="p-10 text-center">No readings found.</p>;
+  }
 
   return (
     <main className="min-h-screen bg-[#f7f7f7] pb-32">
@@ -92,36 +161,52 @@ export default function ReadingPage() {
         </div>
 
         {/* TOOLBAR */}
-        <div className="flex justify-end mt-8">
+        <div className="flex justify-end mt-8 gap-2">
           <HighlightToolbar onColorSelect={highlightSelectedText} />
+
+          <button
+            onClick={removeHighlights}
+            className="px-3 py-2 rounded-lg bg-red-500 text-white text-sm"
+          >
+            Remove Highlights
+          </button>
         </div>
 
         {/* READINGS */}
-        <div className="mt-10 space-y-14">
-          <ReadingCard
-            title="First Reading"
-            subtitle={reading?.Mass_R1?.source}
-            content={reading?.Mass_R1?.text || "No reading available."}
-          />
+        {activeTab === "readings" && (
+          <div id="reading-content" className="mt-10 space-y-14">
+            <ReadingCard
+              title="First Reading"
+              subtitle={reading?.Mass_R1?.source}
+              content={reading?.Mass_R1?.text || "No reading available."}
+            />
 
-          <ReadingCard
-            title="Responsorial Psalm"
-            subtitle={reading?.Mass_Ps?.source}
-            content={reading?.Mass_Ps?.text || "No psalm available."}
-          />
+            <ReadingCard
+              title="Responsorial Psalm"
+              subtitle={reading?.Mass_Ps?.source}
+              content={reading?.Mass_Ps?.text || "No psalm available."}
+            />
 
-          <ReadingCard
-            title="Alleluia"
-            subtitle={reading?.Mass_GA?.source}
-            content={reading?.Mass_GA?.text || "No Alleluia available."}
-          />
+            <ReadingCard
+              title="Alleluia"
+              subtitle={reading?.Mass_GA?.source}
+              content={reading?.Mass_GA?.text || "No Alleluia available."}
+            />
 
-          <ReadingCard
-            title="Gospel"
-            subtitle={reading?.Mass_G?.source}
-            content={reading?.Mass_G?.text || "No gospel available."}
-          />
-        </div>
+            <ReadingCard
+              title="Gospel"
+              subtitle={reading?.Mass_G?.source}
+              content={reading?.Mass_G?.text || "No gospel available."}
+            />
+          </div>
+        )}
+
+        {/* HOMILY PAGE */}
+        {activeTab === "homily" && (
+          <div className="mt-10">
+            <HomilyEditor date={reading?.date} />
+          </div>
+        )}
       </div>
     </main>
   );

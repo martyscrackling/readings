@@ -7,14 +7,21 @@ export interface ReadingItem {
   content: any;
 }
 
+export interface HighlightItem {
+  id: string;
+  html: string;
+}
+
 class ReadingDB extends Dexie {
   readings!: Table<ReadingItem>;
+  highlights!: Table<HighlightItem>;
 
   constructor() {
     super("readingDB");
 
-    this.version(1).stores({
+    this.version(2).stores({
       readings: "++id, date",
+      highlights: "id",
     });
   }
 }
