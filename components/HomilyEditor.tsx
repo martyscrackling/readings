@@ -17,6 +17,8 @@ import {
   Save,
   Undo2,
   Redo2,
+  Expand,
+  Minimize,
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
@@ -29,31 +31,26 @@ export default function HomilyEditor({ date }: Props) {
   const [saved, setSaved] = useState(false);
   const [colorOpen, setColorOpen] = useState(false);
   const [highlightOpen, setHighlightOpen] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   const editor = useEditor({
     extensions: [
       StarterKit,
       Underline,
-      Highlight.configure({
-        multicolor: true,
-      }),
+      Highlight.configure({ multicolor: true }),
       Color.configure({ types: ["textStyle"] }),
       TextStyle,
       Placeholder.configure({
         placeholder: "Write your homily here...",
       }),
     ],
-
     content: "",
     immediatelyRender: false,
-
-    // ✅ THIS removes the focus border / outline
     editorProps: {
       attributes: {
         class: "focus:outline-none outline-none border-none",
       },
     },
-
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       localStorage.setItem(`homily-${date}`, html);
@@ -89,7 +86,13 @@ export default function HomilyEditor({ date }: Props) {
   ];
 
   return (
-    <div className="space-y-6">
+    <div
+      className={`space-y-6 transition-all ${
+        isFullScreen
+          ? "fixed inset-0 z-50 bg-white p-6 overflow-y-auto"
+          : ""
+      }`}
+    >
       {/* TOOLBAR */}
       <div className="flex items-center justify-between bg-[#f7eef4] p-3 rounded-2xl w-full shadow-sm">
         {/* LEFT */}
@@ -173,8 +176,16 @@ export default function HomilyEditor({ date }: Props) {
           </div>
         </div>
 
-        {/* RIGHT (UNDO / REDO) */}
+        {/* RIGHT */}
         <div className="flex items-center gap-2">
+          {/* FULLSCREEN TOGGLE */}
+          <button
+            onClick={() => setIsFullScreen(!isFullScreen)}
+            className="p-2 rounded-lg hover:bg-pink-100"
+          >
+            {isFullScreen ? <Minimize size={18} /> : <Expand size={18} />}
+          </button>
+
           <button
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo()}
@@ -194,7 +205,11 @@ export default function HomilyEditor({ date }: Props) {
       </div>
 
       {/* EDITOR */}
-      <div className="bg-white rounded-3xl shadow-sm min-h-[400px] p-6">
+      <div
+        className={`bg-white rounded-3xl shadow-sm min-h-[400px] p-6 ${
+          isFullScreen ? "flex-1" : ""
+        }`}
+      >
         <EditorContent editor={editor} />
       </div>
 
