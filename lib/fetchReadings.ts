@@ -13,11 +13,19 @@ export async function fetchCatholicReadings() {
 
   const text = await response.text();
 
-  const jsonText = text
-    .replace("universalisCallback(", "")
-    .replace(");", "");
+  // 🚨 SAFETY CHECK (important in production)
+  if (!text || text.trim().startsWith("<")) {
+    throw new Error("Invalid response from Universalis API");
+  }
 
-  const data = JSON.parse(jsonText);
+  // Extract JSON safely (handles variations)
+  const match = text.match(/\(([\s\S]*)\)/);
+
+  if (!match) {
+    throw new Error("Failed to parse JSONP response");
+  }
+
+  const data = JSON.parse(match[1]);
 
   return data;
 }
