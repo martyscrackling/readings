@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { isSupabaseConfigured, supabase } from "../../lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -13,11 +15,10 @@ export default function SignupPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const isDisabled = useMemo(() => {
-    if (!isSupabaseConfigured) return true;
     return isSubmitting;
   }, [isSubmitting]);
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -27,56 +28,32 @@ export default function SignupPage() {
       return;
     }
 
-    if (!supabase) {
-      setError(
-        "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local.",
-      );
+    if (!email || !password) {
+      setError("Please fill in all fields.");
       return;
     }
 
     setIsSubmitting(true);
+
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      // 💡 Fake signup (offline mode)
+      localStorage.setItem("userEmail", email);
 
-      if (signUpError) {
-        setError(signUpError.message);
-        return;
-      }
+      setSuccess("Account created successfully!");
 
-      setSuccess(
-        "Account created. Check your email for a confirmation link (if enabled), then log in.",
-      );
+      // redirect after short delay
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 800);
+    } catch (err) {
+      setError("Signup failed.");
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  async function onGoogle() {
-    setError(null);
-    setSuccess(null);
-
-    if (!supabase) {
-      setError(
-        "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local.",
-      );
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${location.origin}/dashboard`,
-        },
-      });
-      if (oauthError) setError(oauthError.message);
-    } finally {
-      setIsSubmitting(false);
-    }
+  function onGoogle() {
+    setError("Google signup is disabled in offline mode.");
   }
 
   return (
@@ -87,18 +64,9 @@ export default function SignupPage() {
             Sign up
           </h1>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Create an account with email/password or Google.
+            Create an account.
           </p>
         </div>
-
-        {!isSupabaseConfigured ? (
-          <div className="mb-6 rounded-xl border border-black/8 bg-zinc-50 p-4 text-sm text-zinc-700 dark:border-white/15 dark:bg-zinc-950 dark:text-zinc-300">
-            Supabase env vars missing. Add{" "}
-            <span className="font-mono">NEXT_PUBLIC_SUPABASE_URL</span> and{" "}
-            <span className="font-mono">NEXT_PUBLIC_SUPABASE_ANON_KEY</span> to{" "}
-            <span className="font-mono">.env.local</span>.
-          </div>
-        ) : null}
 
         {error ? (
           <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
@@ -114,58 +82,37 @@ export default function SignupPage() {
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="email"
-              className="text-sm font-medium text-zinc-900 dark:text-zinc-100"
-            >
-              Email
-            </label>
+            <label className="text-sm font-medium">Email</label>
             <input
-              id="email"
               type="email"
-              autoComplete="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-11 rounded-xl border border-black/8 bg-transparent px-3 text-sm text-black outline-none ring-0 placeholder:text-zinc-400 focus:border-black/20 dark:border-white/15 dark:text-zinc-50 dark:focus:border-white/30"
+              className="h-11 rounded-xl border border-black/8 bg-transparent px-3 text-sm outline-none dark:border-white/15 dark:text-zinc-50"
               placeholder="you@example.com"
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="password"
-              className="text-sm font-medium text-zinc-900 dark:text-zinc-100"
-            >
-              Password
-            </label>
+            <label className="text-sm font-medium">Password</label>
             <input
-              id="password"
               type="password"
-              autoComplete="new-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="h-11 rounded-xl border border-black/8 bg-transparent px-3 text-sm text-black outline-none ring-0 placeholder:text-zinc-400 focus:border-black/20 dark:border-white/15 dark:text-zinc-50 dark:focus:border-white/30"
+              className="h-11 rounded-xl border border-black/8 bg-transparent px-3 text-sm outline-none dark:border-white/15 dark:text-zinc-50"
               placeholder="••••••••"
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="confirmPassword"
-              className="text-sm font-medium text-zinc-900 dark:text-zinc-100"
-            >
-              Confirm password
-            </label>
+            <label className="text-sm font-medium">Confirm password</label>
             <input
-              id="confirmPassword"
               type="password"
-              autoComplete="new-password"
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="h-11 rounded-xl border border-black/8 bg-transparent px-3 text-sm text-black outline-none ring-0 placeholder:text-zinc-400 focus:border-black/20 dark:border-white/15 dark:text-zinc-50 dark:focus:border-white/30"
+              className="h-11 rounded-xl border border-black/8 bg-transparent px-3 text-sm outline-none dark:border-white/15 dark:text-zinc-50"
               placeholder="••••••••"
             />
           </div>
@@ -173,7 +120,7 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={isDisabled}
-            className="mt-2 inline-flex h-11 items-center justify-center rounded-xl bg-foreground px-4 text-sm font-medium text-background transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-2 inline-flex h-11 items-center justify-center rounded-xl bg-foreground px-4 text-sm font-medium text-background disabled:opacity-60"
           >
             {isSubmitting ? "Creating…" : "Create account"}
           </button>
@@ -181,18 +128,14 @@ export default function SignupPage() {
           <button
             type="button"
             onClick={onGoogle}
-            disabled={isDisabled}
-            className="inline-flex h-11 items-center justify-center rounded-xl border border-black/8 bg-transparent px-4 text-sm font-medium text-black transition-colors hover:bg-black/4 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:text-zinc-50 dark:hover:bg-white/6"
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-black/8 px-4 text-sm font-medium dark:border-white/15"
           >
             Continue with Google
           </button>
 
           <p className="mt-2 text-center text-sm text-zinc-600 dark:text-zinc-400">
             Already have an account?{" "}
-            <Link
-              href="/login"
-              className="font-medium text-zinc-950 hover:underline dark:text-zinc-50"
-            >
+            <Link href="/login" className="font-medium hover:underline">
               Log in
             </Link>
           </p>
