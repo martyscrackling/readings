@@ -19,6 +19,8 @@ import {
   Redo2,
   Expand,
   Minimize,
+  Lock,
+  Unlock,
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
@@ -32,6 +34,9 @@ export default function HomilyEditor({ date }: Props) {
   const [colorOpen, setColorOpen] = useState(false);
   const [highlightOpen, setHighlightOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+
+  // NEW
+  const [isLocked, setIsLocked] = useState(false);
 
   const editor = useEditor({
     extensions: [
@@ -67,6 +72,13 @@ export default function HomilyEditor({ date }: Props) {
     if (savedHomily) editor.commands.setContent(savedHomily);
   }, [editor, date]);
 
+  // NEW
+  useEffect(() => {
+    if (!editor) return;
+
+    editor.setEditable(!isLocked);
+  }, [isLocked, editor]);
+
   if (!editor) return null;
 
   const colors = [
@@ -94,115 +106,117 @@ export default function HomilyEditor({ date }: Props) {
       }`}
     >
       {/* TOOLBAR */}
-      <div className="flex items-center justify-between bg-[#f7eef4] p-3 rounded-2xl w-full shadow-sm">
-        {/* LEFT */}
-        <div className="flex items-center gap-2 relative">
-          <button
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            className="p-2 rounded-lg hover:bg-pink-100"
-          >
-            <Bold size={18} />
-          </button>
-
-          <button
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            className="p-2 rounded-lg hover:bg-pink-100"
-          >
-            <Italic size={18} />
-          </button>
-
-          <button
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
-            className="p-2 rounded-lg hover:bg-pink-100"
-          >
-            <UnderlineIcon size={18} />
-          </button>
-
-          {/* FONT COLOR */}
-          <div className="relative">
+      {!isLocked && (
+        <div className="flex items-center justify-between bg-[#f7eef4] p-3 rounded-2xl w-full shadow-sm">
+          {/* LEFT */}
+          <div className="flex items-center gap-2 relative">
             <button
-              onClick={() => setColorOpen(!colorOpen)}
+              onClick={() => editor.chain().focus().toggleBold().run()}
               className="p-2 rounded-lg hover:bg-pink-100"
             >
-              <Palette size={18} />
+              <Bold size={18} />
             </button>
 
-            {colorOpen && (
-              <div className="absolute top-10 left-0 bg-white shadow-md rounded-xl p-2 flex gap-2 z-50">
-                {colors.map((c) => (
-                  <button
-                    key={c.value}
-                    onClick={() => {
-                      editor.chain().focus().setColor(c.value).run();
-                      setColorOpen(false);
-                    }}
-                    className="w-6 h-6 rounded-full border"
-                    style={{ backgroundColor: c.value }}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* HIGHLIGHT */}
-          <div className="relative">
             <button
-              onClick={() => setHighlightOpen(!highlightOpen)}
+              onClick={() => editor.chain().focus().toggleItalic().run()}
               className="p-2 rounded-lg hover:bg-pink-100"
             >
-              <Highlighter size={18} />
+              <Italic size={18} />
             </button>
 
-            {highlightOpen && (
-              <div className="absolute top-10 left-0 bg-white shadow-md rounded-xl p-2 flex gap-2 z-50">
-                {highlights.map((h) => (
-                  <button
-                    key={h.value}
-                    onClick={() => {
-                      editor
-                        .chain()
-                        .focus()
-                        .toggleHighlight({ color: h.value })
-                        .run();
+            <button
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              className="p-2 rounded-lg hover:bg-pink-100"
+            >
+              <UnderlineIcon size={18} />
+            </button>
 
-                      setHighlightOpen(false);
-                    }}
-                    className="w-6 h-6 rounded-full border"
-                    style={{ backgroundColor: h.value }}
-                  />
-                ))}
-              </div>
-            )}
+            {/* FONT COLOR */}
+            <div className="relative">
+              <button
+                onClick={() => setColorOpen(!colorOpen)}
+                className="p-2 rounded-lg hover:bg-pink-100"
+              >
+                <Palette size={18} />
+              </button>
+
+              {colorOpen && (
+                <div className="absolute top-10 left-0 bg-white shadow-md rounded-xl p-2 flex gap-2 z-50">
+                  {colors.map((c) => (
+                    <button
+                      key={c.value}
+                      onClick={() => {
+                        editor.chain().focus().setColor(c.value).run();
+                        setColorOpen(false);
+                      }}
+                      className="w-6 h-6 rounded-full border"
+                      style={{ backgroundColor: c.value }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* HIGHLIGHT */}
+            <div className="relative">
+              <button
+                onClick={() => setHighlightOpen(!highlightOpen)}
+                className="p-2 rounded-lg hover:bg-pink-100"
+              >
+                <Highlighter size={18} />
+              </button>
+
+              {highlightOpen && (
+                <div className="absolute top-10 left-0 bg-white shadow-md rounded-xl p-2 flex gap-2 z-50">
+                  {highlights.map((h) => (
+                    <button
+                      key={h.value}
+                      onClick={() => {
+                        editor
+                          .chain()
+                          .focus()
+                          .toggleHighlight({ color: h.value })
+                          .run();
+
+                        setHighlightOpen(false);
+                      }}
+                      className="w-6 h-6 rounded-full border"
+                      style={{ backgroundColor: h.value }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT */}
+          <div className="flex items-center gap-2">
+            {/* FULLSCREEN TOGGLE */}
+            <button
+              onClick={() => setIsFullScreen(!isFullScreen)}
+              className="p-2 rounded-lg hover:bg-pink-100"
+            >
+              {isFullScreen ? <Minimize size={18} /> : <Expand size={18} />}
+            </button>
+
+            <button
+              onClick={() => editor.chain().focus().undo().run()}
+              disabled={!editor.can().undo()}
+              className="p-2 rounded-lg hover:bg-pink-100 disabled:opacity-30"
+            >
+              <Undo2 size={18} />
+            </button>
+
+            <button
+              onClick={() => editor.chain().focus().redo().run()}
+              disabled={!editor.can().redo()}
+              className="p-2 rounded-lg hover:bg-pink-100 disabled:opacity-30"
+            >
+              <Redo2 size={18} />
+            </button>
           </div>
         </div>
-
-        {/* RIGHT */}
-        <div className="flex items-center gap-2">
-          {/* FULLSCREEN TOGGLE */}
-          <button
-            onClick={() => setIsFullScreen(!isFullScreen)}
-            className="p-2 rounded-lg hover:bg-pink-100"
-          >
-            {isFullScreen ? <Minimize size={18} /> : <Expand size={18} />}
-          </button>
-
-          <button
-            onClick={() => editor.chain().focus().undo().run()}
-            disabled={!editor.can().undo()}
-            className="p-2 rounded-lg hover:bg-pink-100 disabled:opacity-30"
-          >
-            <Undo2 size={18} />
-          </button>
-
-          <button
-            onClick={() => editor.chain().focus().redo().run()}
-            disabled={!editor.can().redo()}
-            className="p-2 rounded-lg hover:bg-pink-100 disabled:opacity-30"
-          >
-            <Redo2 size={18} />
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* EDITOR */}
       <div
@@ -214,10 +228,22 @@ export default function HomilyEditor({ date }: Props) {
       </div>
 
       {/* SAVE STATUS */}
-      <div className="flex items-center gap-2 text-sm text-gray-400">
-        <Save size={16} />
-        {saved ? "Saved" : "Auto-saving..."}
-      </div>
+      {!isLocked && (
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <Save size={16} />
+          {saved ? "Saved" : "Auto-saving..."}
+        </div>
+      )}
+
+      {/* FLOATING LOCK/UNLOCK FAB */}
+      {isFullScreen && (
+        <button
+          onClick={() => setIsLocked(!isLocked)}
+          className="fixed bottom-6 right-6 z-[999] w-14 h-14 rounded-full bg-pink-500 text-white shadow-xl flex items-center justify-center hover:scale-105 transition-all"
+        >
+          {isLocked ? <Unlock size={22} /> : <Lock size={22} />}
+        </button>
+      )}
     </div>
   );
 }
