@@ -36,7 +36,6 @@ export default function HomilyEditor({ date }: Props) {
       Underline,
       Highlight.configure({
         multicolor: true,
-        inclusive: false,
       }),
       Color.configure({ types: ["textStyle"] }),
       TextStyle,
@@ -91,13 +90,10 @@ export default function HomilyEditor({ date }: Props) {
 
   return (
     <div className="space-y-6">
-
       {/* TOOLBAR */}
       <div className="flex items-center justify-between bg-[#f7eef4] p-3 rounded-2xl w-full shadow-sm">
-
         {/* LEFT */}
         <div className="flex items-center gap-2 relative">
-
           <button
             onClick={() => editor.chain().focus().toggleBold().run()}
             className="p-2 rounded-lg hover:bg-pink-100"
@@ -179,7 +175,6 @@ export default function HomilyEditor({ date }: Props) {
 
         {/* RIGHT (UNDO / REDO) */}
         <div className="flex items-center gap-2">
-
           <button
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo()}
@@ -195,7 +190,6 @@ export default function HomilyEditor({ date }: Props) {
           >
             <Redo2 size={18} />
           </button>
-
         </div>
       </div>
 
