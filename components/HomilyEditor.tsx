@@ -115,7 +115,7 @@ export default function HomilyEditor({ date }: Props) {
       {/* TOOLBAR */}
       {!isLocked && (
         <div
-          className={`flex items-center justify-between bg-[#f7eef4] p-3 rounded-2xl w-full shadow-sm flex-wrap gap-3 ${
+          className={`flex items-center justify-between bg-[#cee3d4] p-3 rounded-2xl w-full shadow-sm flex-wrap gap-3 ${
             isFullScreen ? "sticky top-0 z-50" : ""
           }`}
         >
@@ -123,21 +123,21 @@ export default function HomilyEditor({ date }: Props) {
           <div className="flex items-center gap-2 relative flex-wrap">
             <button
               onClick={() => editor.chain().focus().toggleBold().run()}
-              className="p-2 rounded-lg hover:bg-pink-100"
+              className="p-2 rounded-lg hover:bg-red-100"
             >
               <Bold size={18} />
             </button>
 
             <button
               onClick={() => editor.chain().focus().toggleItalic().run()}
-              className="p-2 rounded-lg hover:bg-pink-100"
+              className="p-2 rounded-lg hover:bg-red-100"
             >
               <Italic size={18} />
             </button>
 
             <button
               onClick={() => editor.chain().focus().toggleUnderline().run()}
-              className="p-2 rounded-lg hover:bg-pink-100"
+              className="p-2 rounded-lg hover:bg-red-100"
             >
               <UnderlineIcon size={18} />
             </button>
@@ -146,7 +146,7 @@ export default function HomilyEditor({ date }: Props) {
             <div className="relative">
               <button
                 onClick={() => setColorOpen(!colorOpen)}
-                className="p-2 rounded-lg hover:bg-pink-100"
+                className="p-2 rounded-lg hover:bg-red-100"
               >
                 <Palette size={18} />
               </button>
@@ -270,7 +270,7 @@ export default function HomilyEditor({ date }: Props) {
       {isFullScreen && (
         <button
           onClick={() => setIsLocked(!isLocked)}
-          className="fixed bottom-6 right-6 z-[999] w-14 h-14 rounded-full bg-pink-500 text-white shadow-xl flex items-center justify-center hover:scale-105 transition-all"
+          className="fixed bottom-6 right-6 z-[999] w-14 h-14 rounded-full bg-[#719f7e] text-white shadow-xl flex items-center justify-center hover:scale-105 transition-all"
         >
           {isLocked ? <Unlock size={22} /> : <Lock size={22} />}
         </button>
