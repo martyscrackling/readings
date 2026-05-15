@@ -1,6 +1,9 @@
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 
+export const metadata = {
+  manifest: "/manifest.json",
+};
 export default function RootLayout({
   children,
 }: {
